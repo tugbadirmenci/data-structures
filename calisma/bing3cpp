@@ -1,0 +1,307 @@
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+
+// Yigit sinifi
+class Yigit {
+    private:
+        int *dizi; // Tam sayi dizisi
+        int indis; // Dizinin son indisini tutan degisken
+        int boyut; // Dizinin boyutunu tutan degisken
+    public:
+        // Parametreli kurucu fonksiyon
+        Yigit(int boyut) {
+            this->boyut = boyut; // Boyutu ata
+            dizi = new int[boyut]; // Dizi icin bellekten yer al
+            indis = -1; // Indisi -1 yap
+        }
+
+        // Yikici fonksiyon
+        ~Yigit() {
+            delete [] dizi; // Diziyi sil
+        }
+
+        // Yigita eleman ekleme fonksiyonu
+        void ekle(int sayi) {
+            if (indis < boyut - 1) { // Yigit dolu degilse
+                indis++; // Indisi artir
+                dizi[indis] = sayi; // Dizinin indisinci elemanina sayiyi ata
+            }
+            else { // Yigit doluysa
+                cout << "Yigit dolu!" << endl; // Hata mesaji ver
+            }
+        }
+
+        // Yigittan eleman cikarma fonksiyonu
+        int cikar() {
+            if (indis > -1) { // Yigit bos degilse
+                int sayi = dizi[indis]; // Dizinin indisinci elemanini sayiya ata
+                indis--; // Indisi azalt
+                return sayi; // Sayiyi dondur
+            }
+            else { // Yigit bos ise
+                cout << "Yigit bos!" << endl; // Hata mesaji ver
+                return -1; // -1 dondur
+            }
+        }
+
+        // Yigitin bos olup olmadigini kontrol eden fonksiyon
+        bool bosMu() {
+            return (indis == -1); // Indis -1 ise true, degilse false dondur
+        }
+
+        // Yigitin en ustundeki elemani donduren fonksiyon
+        int ust() {
+            if (indis > -1) { // Yigit bos degilse
+                return dizi[indis]; // Dizinin indisinci elemanini dondur
+            }
+            else { // Yigit bos ise
+                cout << "Yigit bos!" << endl; // Hata mesaji ver
+                return -1; // -1 dondur
+            }
+        }
+};
+
+// Dugum sinifi
+class Dugum {
+    public:
+        int veri; // Tam sayi verisi tutan degisken
+        Dugum *sol; // Sol cocugu tutan isaretci
+        Dugum *sag; // Sag cocugu tutan isaretci
+
+        // Parametreli kurucu fonksiyon
+        Dugum(int veri) {
+            this->veri = veri; // Veriyi ata
+            sol = NULL; // Sol cocugu NULL yap
+            sag = NULL; // Sag cocugu NULL yap
+        }
+};
+
+// Ikili arama agaci sinifi
+class IkiliAramaAgaci {
+    private:
+        Dugum *kok; // Agacin kok dugumunu tutan isaretci
+        int yukseklik; // Agacin yuksekligini tutan degisken
+
+    public:
+        // Parametresiz kurucu fonksiyon
+        IkiliAramaAgaci() {
+            kok = NULL; // Koku NULL yap
+            yukseklik = 0; // Yuksekligi 0 yap
+        }
+
+        // Agaca eleman ekleme fonksiyonu (yardimci)
+        void ekle(int veri) {
+            kok = ekle(kok, veri); // Kok dugumu guncelle 
+            yukseklik = hesaplaYukseklik(kok); // Yuksekligi guncelle 
+        }
+
+        // Agaca eleman ekleme fonksiyonu (asil)
+        Dugum* ekle(Dugum *dugum, int veri) {
+            if (dugum == NULL) { // Eger dugum NULL ise 
+                return new Dugum(veri); // Yeni bir dugum olustur ve dondur 
+            }
+            else if (veri < dugum->veri) { 
+                                dugum->sol = ekle(dugum->sol, veri); // Dugumun sol cocuguna ekle 
+            }
+            else if (veri > dugum->veri) {
+                dugum->sag = ekle(dugum->sag, veri); // Dugumun sag cocuguna ekle 
+            }
+            // Eger veri dugumun verisine esitse ekleme yapma 
+            return dugum; // Dugumu dondur 
+        }
+
+        // Agactan eleman silme fonksiyonu (yardimci)
+        void sil(int veri) {
+            kok = sil(kok, veri); // Kok dugumu guncelle 
+            yukseklik = hesaplaYukseklik(kok); // Yuksekligi guncelle 
+        }
+
+        // Agactan eleman silme fonksiyonu (asil)
+        Dugum* sil(Dugum *dugum, int veri) {
+            if (dugum == NULL) { // Eger dugum NULL ise 
+                return NULL; // NULL dondur 
+            }
+            else if (veri < dugum->veri) {
+                dugum->sol = sil(dugum->sol, veri); // Dugumun sol cocugundan sil 
+            }
+            else if (veri > dugum->veri) {
+                dugum->sag = sil(dugum->sag, veri); // Dugumun sag cocugundan sil 
+            }
+            else { // Eger veri dugumun verisine esitse 
+                if (dugum->sol == NULL && dugum->sag == NULL) { // Eger yaprak dugum ise 
+                    delete dugum; // Dugumu sil 
+                    return NULL; // NULL dondur 
+                }
+                else if (dugum->sol == NULL) { // Eger sadece sag cocugu varsa 
+                    Dugum *temp = dugum->sag; // Gecici bir isaretci olustur 
+                    delete dugum; // Dugumu sil 
+                    return temp; // Gecici isaretcinin gosterdigi dugumu dondur 
+                }
+                else if (dugum->sag == NULL) { // Eger sadece sol cocugu varsa 
+                    Dugum *temp = dugum->sol; // Gecici bir isaretci olustur 
+                    delete dugum; // Dugumu sil 
+                    return temp; // Gecici isaretcinin gosterdigi dugumu dondur 
+                }
+                else { // Eger iki cocugu da varsa 
+                    Dugum *temp = minDeger(dugum->sag); // Sag alt agacin en kucuk degerli dugumunu bul 
+                    dugum->veri = temp->veri; // Bu degeri silinecek dugume ata 
+                    dugum->sag = sil(dugum->sag, temp->veri); // Sag alt agactan bu degeri sil
+                }
+            }
+            return dugum; // Dugumu dondur
+        }
+
+        // Agacin bos olup olmadigini kontrol eden fonksiyon
+        bool bosMu() {
+            return (kok == NULL); // Kok NULL ise true, degilse false dondur
+        }
+
+        // Agacin yuksekligini hesaplayan fonksiyon (yardimci)
+        int hesaplaYukseklik() {
+            return hesaplaYukseklik(kok); // Kokten baslayarak yuksekligi hesapla ve dondur
+        }
+
+        // Agacin yuksekligini hesaplayan fonksiyon (asil)
+        int hesaplaYukseklik(Dugum *dugum) {
+            if (dugum == NULL) { // Eger dugum NULL ise
+                return 0; // 0 dondur
+            }
+            else { // Degilse
+                int solYukseklik = hesaplaYukseklik(dugum->sol); // Sol alt agacin yuksekligini hesapla
+                int sagYukseklik = hesaplaYukseklik(dugum->sag); // Sag alt agacin yuksekligini hesapla
+                return max(solYukseklik, sagYukseklik) + 1; // Buyuk olan yuksekligin bir fazlasini dondur
+            }
+        }
+
+        // Agacin dugum degerlerinin toplamini hesaplayan fonksiyon (yardimci)
+        int hesaplaToplam() {
+            return hesaplaToplam(kok); // Kokten baslayarak toplami hesapla ve dondur
+        }
+
+        // Agacin dugum degerlerinin toplamini hesaplayan fonksiyon (asil)
+        int hesaplaToplam(Dugum *dugum) {
+            if (dugum == NULL) { // Eger dugum NULL ise
+                return 0; // 0 dondur
+            }
+            else { // Degilse
+                int solToplam = hesaplaToplam(dugum->sol); // Sol alt agacin toplamini hesapla
+                int sagToplam = hesaplaToplam(dugum->sag); // Sag alt agacin toplamini hesapla
+                return solToplam + sagToplam + dugum->veri; // Toplamlarin ve dugumun degerinin toplamini dondur
+            }
+        }
+
+        // Agaci postorder dolasan fonksiyon (yardimci)
+        void postorder() {
+            postorder(kok); // Kokten baslayarak postorder dolas
+        }
+
+        // Agaci postorder dolasan fonksiyon (asil)
+        void postorder(Dugum *dugum) {
+            if (dugum != NULL) { // Eger dugum NULL degilse
+                postorder(dugum->sol); // Sol cocugu dolas
+                postorder(dugum->sag); // Sag cocugu dolas
+                cout << char(dugum->veri) << " "; // Dugumun degerinin ASCII karakter karsiligini yazdir
+                usleep(10000); // 10 milisaniye bekle
+            }
+        }
+
+    private:
+        // Agacin en kucuk degerli dugumunu bulan fonksiyon
+        Dugum* minDeger(Dugum *dugum) {
+            if (dugum == NULL) { // Eger dugum NULL ise 
+                return NULL; // NULL dondur 
+            }
+            else if (dugum->sol == NULL) { // Eger sol cocugu yoksa 
+                return dugum; // Dugumu dondur 
+            }
+            else { // Degilse 
+                return minDeger(dugum->sol); // Sol cocuktan devam et 
+            }
+        }
+};
+
+// Ana fonksiyon
+int main() {
+    ifstream dosya; // Dosya okuma icin bir nesne olustur 
+    dosya.open("Sayilar.txt"); // Sayilar.txt dosyasini ac 
+    if (!dosya.is_open()) { // Eger dosya acilmadiysa 
+        cout << "Dosya acilamadi!" << endl; // Hata mesaji ver 
+        return -1; // Programi sonlandir 
+    }
+    string satir; // Satirlari tutacak bir string degiskeni tanimla 
+    while (getline(dosya, satir)) { // Dosyadan satir satir oku 
+        Yigit *yigit = new Yigit(satir.length()); // Satir uzunlugunda bir yigit nesnesi olustur 
+        IkiliAramaAgaci **agacDizisi = new IkiliAramaAgaci*[satir.length()]; // Satir uzunlugunda bir ikili arama agaci isaretcisi dizisi olustur 
+        int agacSayisi = 0; // Agac sayisini tutacak bir degisken tanimla ve 0 yap 
+        for (int i = 0; i < satir.length(); i++) { // Satirdaki her karakter icin 
+            if (isdigit(satir[i])) { // Eger karakter bir rakamsa 
+                int sayi = satir[i] - '0'; // Karakterin tam sayi degerini bul 
+                if (yigit->bosMu()) { // Eger yigit bos ise 
+                    yigit->ekle(sayi); // Yigita sayiyi ekle 
+                }
+                else { // Degilse 
+                    if (sayi % 2 == 0 && sayi > yigit->ust()) { // Eger sayi cift ve yigitin ustundeki sayidan buyukse 
+                        agacDizisi[agacSayisi] = new IkiliAramaAgaci(); 
+
+                                                // Agac dizisinin agac sayisi indisine yeni bir ikili arama agaci nesnesi ata 
+                        while (!yigit->bosMu()) { // Yigit bos olana kadar 
+                            int deger = yigit->cikar(); // Yigittan bir deger cikar 
+                            agacDizisi[agacSayisi]->ekle(deger); // Bu degeri agaca ekle 
+                        }
+                        agacSayisi++; // Agac sayisini artir 
+                        yigit->ekle(sayi); // Yigita sayiyi ekle 
+                    }
+                    else { // Degilse 
+                        yigit->ekle(sayi); // Yigita sayiyi ekle 
+                    }
+                }
+            }
+        }
+        if (!yigit->bosMu()) { // Eger yigit bos degilse 
+            agacDizisi[agacSayisi] = new IkiliAramaAgaci(); // Agac dizisinin agac sayisi indisine yeni bir ikili arama agaci nesnesi ata 
+            while (!yigit->bosMu()) { // Yigit bos olana kadar 
+                int deger = yigit->cikar(); // Yigittan bir deger cikar 
+                agacDizisi[agacSayisi]->ekle(deger); // Bu degeri agaca ekle 
+            }
+            agacSayisi++; // Agac sayisini artir 
+        }
+        delete yigit; // Yigit nesnesini sil 
+
+        IkiliAramaAgaci *maxAgac = NULL; // En buyuk yukseklikteki agaci tutacak bir isaretci tanimla ve NULL yap 
+        int maxYukseklik = 0; // En buyuk yuksekligi tutacak bir degisken tanimla ve 0 yap 
+        int maxToplam = 0; // En buyuk toplami tutacak bir degisken tanimla ve 0 yap 
+        for (int i = 0; i < agacSayisi; i++) { // Agac sayisi kadar don 
+            IkiliAramaAgaci *agac = agacDizisi[i]; // Agac dizisinin i. elemanini al 
+            int yukseklik = agac->hesaplaYukseklik(); // Agacin yuksekligini hesapla 
+            int toplam = agac->hesaplaToplam(); // Agacin toplamini hesapla 
+            if (yukseklik > maxYukseklik) { // Eger yukseklik en buyuk yukseklikten buyukse 
+                maxAgac = agac; // En buyuk agaci guncelle 
+                maxYukseklik = yukseklik; // En buyuk yuksekligi guncelle 
+                maxToplam = toplam; // En buyuk toplami guncelle
+            }
+            else if (yukseklik == maxYukseklik) { // Eger yukseklik en buyuk yukseklige esitse
+                if (toplam > maxToplam) { // Eger toplam en buyuk toplamdan buyukse
+                    maxAgac = agac; // En buyuk agaci guncelle
+                    maxToplam = toplam; // En buyuk toplami guncelle
+                }
+            }
+        }
+
+        if (maxAgac != NULL) { // Eger en buyuk agac NULL degilse
+            maxAgac->postorder(); // Agaci postorder dolas
+            cout << endl; // Bir satir atla
+        }
+
+        for (int i = 0; i < agacSayisi; i++) { // Agac sayisi kadar don
+            delete agacDizisi[i]; // Agac dizisinin i. elemanini sil
+        }
+        delete [] agacDizisi; // Agac dizisini sil
+    }
+
+    dosya.close(); // Dosyayi kapat
+
+    return 0; // Programi sonlandir
+}
